@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Мультимодальная карта России</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <style>
+        #map { height: 600px; margin: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        // 1. Создаём карту
+        var map = L.map('map').setView([64.0, 100.0], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 2. Слой для нарисованных объектов (маршруты, маркеры)
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        // 3. Панель рисования
+        var drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems },
+            draw: {
+                polygon: true,
+                polyline: true,
+                marker: true,
+                circle: false,
+                rectangle: false
+            }
+        });
+        map.addControl(drawControl);
+
+        // 4. Сохраняем нарисованное в консоль (или можно отправлять на сервер)
+        map.on('draw:created', function(e) {
+            var layer = e.layer;
+            drawnItems.addLayer(layer);
+            console.log("Создан объект:", layer.toGeoJSON());
+        });
+
+        // 5. Загружаем маркеры из JSON (прямо в коде или из файла)
+        var markersData = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": { "type": "Point", "coordinates": [37.6173, 55.7558] },
+                    "properties": { "name": "Москва", "type": "Ж/Д узел" }
+                },
+                {
+                    "type": "Feature",
+                    "geometry": { "type": "Point", "coordinates": [30.3159, 59.9386] },
+                    "properties": { "name": "Санкт-Петербург", "type": "Морской порт" }
+                }
+            ]
+        };
+
+        L.geoJSON(markersData, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng).bindPopup(
+                    "<b>" + feature.properties.name + "</b><br>" + feature.properties.type
+                );
+            }
+        }).addTo(map);
+    </script>
+</body>
+</html>
